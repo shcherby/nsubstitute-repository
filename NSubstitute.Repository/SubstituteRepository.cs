@@ -8,7 +8,12 @@ namespace NSubstitute
 {
     public class SubstituteRepository : IDisposable
     {
-        private static readonly Dictionary<object, HashSet<Action>> substituteCalls = new Dictionary<object, HashSet<Action>>();
+        private static Dictionary<object, HashSet<Action>> substituteCalls;
+
+        public SubstituteRepository()
+        {
+            substituteCalls = new Dictionary<object, HashSet<Action>>();
+        }
 
         public TSubstitute Create<TSubstitute>()
             where TSubstitute : class
