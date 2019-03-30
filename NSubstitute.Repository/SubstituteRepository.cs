@@ -8,19 +8,19 @@ namespace NSubstitute
 {
     public class SubstituteRepository : IDisposable
     {
-        private static readonly Dictionary<object, List<Action>> SubstituteCalls = new Dictionary<object, List<Action>>();
+        private static readonly Dictionary<object, HashSet<Action>> substituteCalls = new Dictionary<object, HashSet<Action>>();
 
         public TSubstitute Create<TSubstitute>()
             where TSubstitute : class
         {
             var substitute = Substitute.For<TSubstitute>();
-            SubstituteCalls.Add(substitute, new List<Action>());
+            substituteCalls.Add(substitute, new HashSet<Action>());
             return substitute;
         }
 
         public static void AddCall(object substitute, Action call)
         {
-            if (SubstituteCalls.TryGetValue(substitute, out var calls))
+            if (substituteCalls.TryGetValue(substitute, out var calls))
             {
                 calls.Add(call);
             }
@@ -32,7 +32,7 @@ namespace NSubstitute
 
         public void VerifyAll()
         {
-            if (!SubstituteCalls.Keys.Any())
+            if (!substituteCalls.Keys.Any())
             {
                 return;
             }
@@ -41,20 +41,23 @@ namespace NSubstitute
 
             Action calls = () =>
             {
-                SubstituteCalls.Values.SelectMany(x => x).ToList().ForEach(x => x());
+                substituteCalls.Values
+                .SelectMany(callWrapper => callWrapper)
+                .ToList()
+                .ForEach(callWrapper => callWrapper());
             };
 
             SubstitutionContext.Current.ThreadContext.RunInQueryContext(calls, query);
 
-            ICall[] receivedCalls = SubstituteCalls.Keys.SelectMany(substitute => substitute.ReceivedCalls()).ToArray();
-            SubstituteCalls.Clear();
+            ICall[] receivedCalls = substituteCalls.Keys.SelectMany(substitute => substitute.ReceivedCalls()).ToArray();
+            substituteCalls.Clear();
 
-            new ReceivedCallsAssertion().Assert(query.Result(), receivedCalls);
+            new VerifyAllAssertion().Assert(query.Result(), receivedCalls);
         }
 
         public void Dispose()
         {
-            SubstituteCalls.Clear();
+            substituteCalls.Clear();
         }
     }
 }

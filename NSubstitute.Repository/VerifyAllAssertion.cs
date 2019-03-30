@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace NSubstitute.Repository
 {
-    public class ReceivedCallsAssertion
+    public class VerifyAllAssertion
     {
         public void Assert(IQueryResults queryResult, ICall[] receivedCalls)
         {
@@ -38,7 +38,8 @@ namespace NSubstitute.Repository
 
         private bool Matches(ICall call, CallSpecAndTarget specAndTarget)
         {
-            return ReferenceEquals(call.Target(), specAndTarget.Target)
+            var callTarget = call.Target();
+            return ReferenceEquals(callTarget, specAndTarget.Target)
                    && specAndTarget.CallSpecification.IsSatisfiedBy(call);
         }
 

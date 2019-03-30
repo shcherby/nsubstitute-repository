@@ -7,6 +7,7 @@ namespace NSubstitute.Repository.Test
     public class SubstituteRepositoryTests : UtitTestsBase
     {
         private ICar _car;
+        private IBus _bus;
         const int Rpm = 7000;
         private static readonly object[] Luggage = new[] { new object(), new object() };
         private static readonly DateTime[] ServiceDates = new[] { new DateTime(2001, 01, 01), new DateTime(2002, 02, 02) };
@@ -14,6 +15,17 @@ namespace NSubstitute.Repository.Test
         public SubstituteRepositoryTests()
         {
             _car = SubstituteRepository.Create<ICar>();
+            _bus = SubstituteRepository.Create<IBus>();
+        }
+
+        [Fact]
+        public void Check_when_calls_from_several_substitutes_was_received()
+        {
+            _car.Setup(m => m.Rev());
+            _bus.Setup(m => m.RevBus());
+
+            _bus.RevBus();
+            _car.Rev();
         }
 
         [Fact]
@@ -105,6 +117,20 @@ namespace NSubstitute.Repository.Test
         {
             SubstituteRepository.VerifyAll();
         }
+    }
+
+    public interface IBus
+    {
+        void StartBus();
+        void RevBus();
+        void StopBus();
+        void IdleBus();
+        void RevAtBus(int rpm);
+        void FillPetrolTankToBus(int percent);
+        void StoreLuggageBus(params object[] luggage);
+        void RecordServiceDatesBus(params DateTime[] serviceDates);
+        float GetCapacityInLitresBus();
+        event Action StartedBus;
     }
 
     public interface ICar
