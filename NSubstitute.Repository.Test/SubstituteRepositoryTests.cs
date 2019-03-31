@@ -104,21 +104,6 @@ namespace NSubstitute.Repository.Test
         }
     }
 
-    public abstract class UtitTestsBase : IDisposable
-    {
-        protected readonly SubstituteRepository SubstituteRepository;
-
-        public UtitTestsBase()
-        {
-            SubstituteRepository = new SubstituteRepository();
-        }
-
-        public void Dispose()
-        {
-            SubstituteRepository.VerifyAll();
-        }
-    }
-
     public interface IBus
     {
         void StartBus();
