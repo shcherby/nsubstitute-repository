@@ -8,37 +8,24 @@ namespace NSubstitute
 {
     public class SubstituteRepository : IDisposable
     {
-        [ThreadStaticAttribute]
-        private static Dictionary<object, HashSet<Action>> substituteCalls;
+        private HashSet<Mock> mocks;
 
         public SubstituteRepository()
         {
-            substituteCalls = new Dictionary<object, HashSet<Action>>();
+            mocks = new HashSet<Mock>();
         }
 
-        public TSubstitute Create<TSubstitute>()
+        public Mock<TSubstitute> Create<TSubstitute>()
             where TSubstitute : class
         {
-            var substitute = Substitute.For<TSubstitute>();
-            substituteCalls.Add(substitute, new HashSet<Action>());
-            return substitute;
-        }
-
-        public static void AddCall(object substitute, Action call)
-        {
-            if (substituteCalls.TryGetValue(substitute, out var calls))
-            {
-                calls.Add(call);
-            }
-            else
-            {
-                throw new Exception($"{substitute.GetType().Name} wasn't create in {nameof(SubstituteRepository)}.");
-            }
+            var mock = new Mock<TSubstitute>(Substitute.For<TSubstitute>());
+            mocks.Add(mock);
+            return mock;
         }
 
         public void VerifyAll()
         {
-            if (!substituteCalls.Keys.Any())
+            if (!mocks.Any())
             {
                 return;
             }
@@ -47,23 +34,23 @@ namespace NSubstitute
 
             Action calls = () =>
             {
-                substituteCalls.Values
-                .SelectMany(callWrapper => callWrapper)
+                mocks
+                .SelectMany(callWrapper => callWrapper.RegisteredCalls)
                 .ToList()
                 .ForEach(callWrapper => callWrapper());
             };
 
             SubstitutionContext.Current.ThreadContext.RunInQueryContext(calls, query);
 
-            ICall[] receivedCalls = substituteCalls.Keys.SelectMany(substitute => substitute.ReceivedCalls()).ToArray();
-            substituteCalls.Clear();
+            ICall[] receivedCalls = mocks.SelectMany(mock => mock.ReceivedCalls).ToArray();
+            mocks.Clear();
 
             new VerifyAllAssertion().Assert(query.Result(), receivedCalls);
         }
 
         public void Dispose()
         {
-            substituteCalls.Clear();
+            mocks.Clear();
         }
     }
 }

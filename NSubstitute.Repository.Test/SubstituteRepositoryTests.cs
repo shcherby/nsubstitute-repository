@@ -6,8 +6,8 @@ namespace NSubstitute.Repository.Test
 {
     public class SubstituteRepositoryTests : UtitTestsBase
     {
-        private ICar _car;
-        private IBus _bus;
+        private Mock<ICar> _car;
+        private Mock<IBus> _bus;
         const int Rpm = 7000;
         private static readonly object[] Luggage = new[] { new object(), new object() };
         private static readonly DateTime[] ServiceDates = new[] { new DateTime(2001, 01, 01), new DateTime(2002, 02, 02) };
@@ -24,8 +24,8 @@ namespace NSubstitute.Repository.Test
             _car.Setup(m => m.Rev());
             _bus.Setup(m => m.RevBus());
 
-            _bus.RevBus();
-            _car.Rev();
+            _bus.Object.RevBus();
+            _car.Object.Rev();
         }
 
         [Fact]
@@ -33,7 +33,7 @@ namespace NSubstitute.Repository.Test
         {
             _car.Setup(m => m.Rev());
 
-            _car.Rev();
+            _car.Object.Rev();
         }
 
         [Fact]
@@ -41,7 +41,7 @@ namespace NSubstitute.Repository.Test
         {
             Assert.Throws<CallSequenceNotFoundException>(() =>
             {
-                _car.Idle();
+                _car.Object.Idle();
                 SubstituteRepository.VerifyAll();
             });
         }
@@ -51,7 +51,7 @@ namespace NSubstitute.Repository.Test
         {
             _car.Setup(m => m.RevAt(Rpm));
 
-            _car.RevAt(Rpm);
+            _car.Object.RevAt(Rpm);
         }
 
         [Fact]
@@ -60,7 +60,7 @@ namespace NSubstitute.Repository.Test
             float expected = 10;
             _car.Setup(m => m.GetCapacityInLitres()).Returns(expected);
 
-            var actual = _car.GetCapacityInLitres();
+            var actual = _car.Object.GetCapacityInLitres();
 
             Assert.Equal(expected, actual);
         }
@@ -73,7 +73,7 @@ namespace NSubstitute.Repository.Test
 
             Assert.Throws<CallSequenceNotFoundException>(() =>
             {
-                _car.RevAt(Rpm + 2);
+                _car.Object.RevAt(Rpm + 2);
                 SubstituteRepository.VerifyAll();
             });
         }
@@ -85,22 +85,9 @@ namespace NSubstitute.Repository.Test
 
             Assert.Throws<CallSequenceNotFoundException>(() =>
             {
-                _car.Rev();
+                _car.Object.Rev();
                 SubstituteRepository.VerifyAll();
             });
-        }
-
-        [Fact]
-        public void Check_that_a_call_was_run_not_from_substitute_repository()
-        {
-            var car = Substitute.For<ICar>();
-
-            var exception = Assert.Throws<Exception>(() =>
-             {
-                 car.Setup(m => m.Rev());
-             });
-
-            Assert.Equal("ObjectProxy wasn't create in SubstituteRepository.", exception.Message);
         }
     }
 
