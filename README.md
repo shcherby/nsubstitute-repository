@@ -11,7 +11,7 @@ public void Check_call_for_substitute_was_received_and_registered()
     var car = substituteRepository.Create<ICar>();
     car.Setup(m => m.Rev());
 
-    car.Rev();
+    car.Object.Rev();
 
     substituteRepository.VerifyAll();
 }
