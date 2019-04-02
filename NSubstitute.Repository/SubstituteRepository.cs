@@ -1,4 +1,4 @@
-﻿using NSubstitute.Core;
+using NSubstitute.Core;
 using NSubstitute.Repository;
 using System;
 using System.Collections.Generic;
@@ -8,6 +8,7 @@ namespace NSubstitute
 {
     public class SubstituteRepository : IDisposable
     {
+        [ThreadStaticAttribute]
         private static Dictionary<object, HashSet<Action>> substituteCalls;
 
         public SubstituteRepository()
