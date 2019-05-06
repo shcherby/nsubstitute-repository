@@ -4,7 +4,7 @@ using NSubstitute.Core;
 using NSubstitute.Core.SequenceChecking;
 using NSubstitute.Exceptions;
 
-namespace SDW.UnitTests.Core.Assertions
+namespace NSubstitute.Repository
 {
     public class VerifyAllAssertion
     {
