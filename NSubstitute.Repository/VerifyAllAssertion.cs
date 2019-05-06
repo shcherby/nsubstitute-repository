@@ -1,16 +1,18 @@
-﻿using NSubstitute.Core;
-using NSubstitute.Core.SequenceChecking;
-using NSubstitute.Exceptions;
 using System.Linq;
 using System.Reflection;
+using NSubstitute.Core;
+using NSubstitute.Core.SequenceChecking;
+using NSubstitute.Exceptions;
 
-namespace NSubstitute.Repository
+namespace SDW.UnitTests.Core.Assertions
 {
     public class VerifyAllAssertion
     {
+        private const string CallDelimiter = "\n    ";
+
         public void Assert(IQueryResults queryResult, ICall[] receivedCalls)
         {
-            CallSpecAndTarget[] querySpec = queryResult
+            var querySpec = queryResult
                 .QuerySpecification()
                 .Where(x => IsNotPropertyGetterCall(x.CallSpecification.GetMethodInfo()))
                 .ToArray();
@@ -20,19 +22,11 @@ namespace NSubstitute.Repository
                 throw new CallSequenceNotFoundException(GetExceptionMessage(querySpec, receivedCalls));
             }
 
-            var callsAndSpecs = receivedCalls
-               .Zip(querySpec, (call, specAndTarget) =>
-                               new
-                               {
-                                   Call = call,
-                                   Spec = specAndTarget.CallSpecification,
-                                   IsMatch = Matches(call, specAndTarget)
-                               }
-               );
+            var notMatchedCalls = querySpec.Where(spec => receivedCalls.FirstOrDefault(call => Matches(call, spec)) == null).ToArray();
 
-            if (callsAndSpecs.Any(x => !x.IsMatch))
+            if (notMatchedCalls.Any())
             {
-                throw new CallSequenceNotFoundException(GetExceptionMessage(querySpec, receivedCalls));
+                throw new CallSequenceNotFoundException(GetExceptionMessage(notMatchedCalls, receivedCalls));
             }
         }
 
@@ -50,14 +44,13 @@ namespace NSubstitute.Repository
 
         private string GetExceptionMessage(CallSpecAndTarget[] querySpec, ICall[] matchingCallsInOrder)
         {
-            const string callDelimiter = "\n    ";
-            var formatter = new SequenceFormatter(callDelimiter, querySpec, matchingCallsInOrder);
-            return string.Format("\nActually registered calls:\n{0}{1}\n" +
-                                 "\nReceived calls:\n{0}{2}\n\n{3}",
-                                 callDelimiter,
-                                 formatter.FormatQuery(),
-                                 formatter.FormatActualCalls(),
-                                 "*** Note: calls to property getters are not considered part of the query. ***");
+            var formatter = new SequenceFormatter(CallDelimiter, querySpec, matchingCallsInOrder);
+            return string.Format(
+                "\nActually not matched registered calls:\n{0}{1}\n\nReceived calls:\n{0}{2}\n\n{3}",
+                CallDelimiter,
+                formatter.FormatQuery(),
+                formatter.FormatActualCalls(),
+                "*** Note: calls to property getters are not considered part of the query. ***");
         }
     }
 }
